@@ -1,64 +1,101 @@
 import re
 from text_splitter import SentenceSplitter
+from speech_recognizer import SpeechRecognizer
 
 class SentenceMatcher:
-    def __init__(self, min_word_len = 0) -> None:
-        self.min_word_len = min_word_len
+    def __init__(self) -> None:
+        pass
 
-    def _sort_sentence_index(self, sentence_list):
+    def _sort_sentence_index_by_len(self, sentence_list, descending = True, min_word_len = 0):
         '''sort sentences in order of increasing length'''
 
+        assert(min_word_len >= 0)
         idx_len_dicts = []
         for i in range(0, len(sentence_list)):
-            if len(sentence_list[i]) > self.min_word_len:
-                idx_len_dicts.append((i, len(sentence_list[i])))
-        idx_len_dicts.sort(key = lambda item: item[1], reverse=True)
-        return idx_len_dicts
+            sentence = sentence_list[i]
+
+            if min_word_len == 0:
+                sentence_len = len(sentence)
+            else:
+                sentence_len = 0
+                for word in sentence:
+                    if len(word) > min_word_len:
+                        sentence_len += 1
+ 
+            idx_len_dicts.append({"idx" : i, "len" : sentence_len})
+
+        idx_len_dicts.sort(key = lambda item: item["len"], reverse=descending)
+        return [item["idx"] for item in idx_len_dicts]
 
     @staticmethod
-    def _find_sentence_positions(ref_sentence, recog_text):
+    def _find_sentence_positions(ref_sent_words, rec_text_words):
         '''finds all subsequence occurencies'''
 
         positions = []
-        for pos in range(0, max(0, len(recog_text) - (len(ref_sentence) - 1))):
-            if ref_sentence == recog_text[pos:pos + len(ref_sentence)]:
+        ref_sent_len = len(ref_sent_words)
+
+        for pos in range(0, max(0, len(rec_text_words) - ref_sent_len + 1)):
+            if ref_sent_words == rec_text_words[pos:pos + ref_sent_len]:
                 positions.append(pos)
+
         return positions
 
     @staticmethod
-    def _check_sync(ref_sentence, recog_text):
-        '''check if sentence occurs in the text'''
-        pass
-   
-    def _get_sync(self, ref_sentences, recog_text):
-        '''TODO: implement'''
-        pass
-        idxes = self._sort_sentence_index(self, ref_sentences)
-        sync_idx = 0
-        for i in idxes:
-            index = i[0]
-            if _check_sync(ref_sentences[index], ):
-                sync_idx = index
-                break
-        return sync_idx
-    
+    def _gather_text_stat(ref_sentences, rec_text_words):
+        '''returns {sentence_text_lower_case : {'ref_words' : [...], 'ref_index' : [indeces_in_ref_text], 'rec_positions' : [positions_in_rec_text]}}'''
+
+        sentence_stat = {}
+        rec_text = [word.lower() for word in rec_text_words]
+        ref_sentences = [[word.lower() for word in rs] for rs in ref_sentences]
+
+        for ref_sent_idx in range(0, len(ref_sentences)):
+            ref_sentence = ref_sentences[ref_sent_idx]
+            ref_sentence_txt = ' '.join(ref_sentence)
+
+            if ref_sentence_txt in sentence_stat:
+                sentence_stat[ref_sentence_txt]["ref_index"].append(ref_sent_idx)
+            else:
+                positions = SentenceMatcher._find_sentence_positions(ref_sentence, rec_text)
+                sentence_stat[ref_sentence_txt] = {"ref_words" : ref_sentence, 'ref_index' : [ref_sent_idx], 'rec_positions' : positions}
+
+        return sentence_stat
+
+    @staticmethod
+    def indexRecSentences(reference_sentences, recognized_words, min_sent_length = 0):
+        '''Rederence sentences are lists of strings, recognized text is a list of words.
+        Returns ref sentence index in terms of words, e.g. '''
+
+        stat = SentenceMatcher._gather_text_stat(reference_sentences, recognized_words)
+        #print(stat)
+        unique_sent_stat = { k : v for k, v in stat.items() if len(v['ref_index']) == 1 and len(v['rec_positions']) == 1 and len(v['ref_words']) >= min_sent_length}
+
+        return unique_sent_stat
+
 def __main__():
+    #reference texеt sentece tokenizing section
     input_file = r'/media/alf/storage1/ml/voice/data_pile/books/Stajery_cut.txt'
     splitter = SentenceSplitter()
     with open(input_file, 'rb') as f:
         text = f.read().decode()
-        sentences = splitter.tokenize_text(text)
+        ref_sentences = splitter.tokenize_text(text)
 
-    word_lists = [re.findall('[\w\\-]+', s['body']) for s in sentences]
-    matcher = SentenceMatcher(2)
-    sen_idx = matcher._sort_sentence_index(word_lists)
-    print(sen_idx)
+    ref_sentences = [re.findall('[\w\\-]+', s['body']) for s in ref_sentences]
+    #print(ref_sentences)
+    #exit(0)
 
-    
-    all_words = []
-    for lst in word_lists:
-        all_words = all_words + lst
-    print(word_lists[3], all_words)
-    print(matcher._find_sentence_positions(word_lists[3], all_words))
+    #speech recongnition section
+    model_path = "models/vosk-model-ru-0.22"
+    recognizer = SpeechRecognizer(model_path)
+    filename = 'TraineesStrugRU.mp4_cut'
+    audio_filename = '../data_pile/' + filename + '.wav'
+    rec_result = recognizer.recognize(audio_filename)
+#    exit(0)
+    rec_words = [rec_word['word'] for rec_word in rec_result['result']]
 
+    matcher = SentenceMatcher()
+    min_sentence_lenght = 0
+    stat = matcher.indexRecSentences(ref_sentences, rec_words, min_sentence_lenght)
+    print(stat)
+ 
 __main__()
+

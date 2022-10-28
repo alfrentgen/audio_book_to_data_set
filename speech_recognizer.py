@@ -40,4 +40,4 @@ def __main__():
 
     exit(0)
 
-__main__()
+#__main__()

@@ -68,4 +68,4 @@ def __main__():
         print(re.findall('[\w-]+', s['body']))
         print(s['stopper'])
 
-__main__()
+#__main__()
