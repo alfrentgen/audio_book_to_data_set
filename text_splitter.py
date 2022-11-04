@@ -3,7 +3,7 @@ import re
 
 class SentenceSplitter:
     def __init__(self) -> None:
-        self.delimiters = '?!', '...' , '.', '!', '?'
+        self.delimiters = '?!', '...', '\u2026', '.', '!', '?' #U+2026 - is UTF ellipse symbol.
 
     def replace_eols(self, text: str):
         '''remove word hyphenation at EOLs and EOLs'''
@@ -58,7 +58,7 @@ class SentenceSplitter:
 
 
 def __main__():
-    input_file = r'/media/alf/storage1/ml/voice/data_pile/books/Stajery_cut.txt'
+    input_file = r'/media/alf/storage1/ml/voice/data_pile/books/Stajery.txt'
     splitter = SentenceSplitter()
     with open(input_file, 'rb') as f:
         text = f.read().decode()

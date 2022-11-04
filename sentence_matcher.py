@@ -97,5 +97,5 @@ def __main__():
     stat = matcher.indexRecSentences(ref_sentences, rec_words, min_sentence_lenght)
     print(stat)
  
-__main__()
+#__main__()
 
