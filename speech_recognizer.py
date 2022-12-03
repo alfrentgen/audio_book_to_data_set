@@ -7,9 +7,9 @@ class SpeechRecognizer:
     def __init__(self, model_path) -> None:
         self.model = Model(model_path)
 
-    def recognize(self, audio_filename, offset = 0, nframes = None):
+    def recognize(self, audio_file_name_or_obj, offset = 0, nframes = None):
         result = None
-        with wave.open(audio_filename, "rb") as wf:
+        with wave.open(audio_file_name_or_obj, "rb") as wf:
             assert(wf.getnchannels() == 1)
             wf.setpos(offset)
             nframes = wf.getnframes() if nframes == None else nframes
