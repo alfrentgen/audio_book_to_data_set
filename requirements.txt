@@ -1,0 +1,10 @@
+io
+os
+re
+argparse
+wave
+json
+string
+ffmpeg
+vosk
+ffmpeg-python
