@@ -1,4 +1,4 @@
-import re
+import regex as re
 from sentence_matcher import SentenceMatcher 
 from text_splitter import SentenceSplitter
 from speech_recognizer import SpeechRecognizer
@@ -43,12 +43,17 @@ def __main__():
     splitter = SentenceSplitter()
     with open(input_ref_file, 'rb') as f:
         text = f.read().decode()
-        ref_sents = splitter.tokenize_text(text)
-    
-    #print(ref_sentences)
-    ref_sentences = [re.findall('[\w\\-]+', s['body']) for s in ref_sents]
+        ref_sents = splitter.split(text)
 
-    #ffminput
+    #print(ref_sents)
+    #exit(0)
+    # TODO: collect punctuation marks and positions and use them for unrecognized gaps filling
+    # punct = collect_punctuation(s)
+    
+    #split sentences in words
+    ref_word_lists = [re.findall('[\w\\-]+', s['body']) for s in ref_sents]
+
+    #ffmepg input
     ffinput = ffmpeg.input(stream_file).audio
     if begin_time is not None or end_time is not None:
         ffinput = ffinput.filter('atrim', start = begin_time, end = end_time)
@@ -79,7 +84,7 @@ def __main__():
     #match sentences and recgnized text
     matcher = SentenceMatcher()
     min_sentence_length = 0
-    stat = matcher.indexRecSentences(ref_sentences, rec_words, min_sentence_length)
+    stat = matcher.indexRecSentences(ref_word_lists, rec_words, min_sentence_length)
 
     #input stream cutting and saving
     sentences_with_pts = []

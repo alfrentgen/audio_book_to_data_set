@@ -1,4 +1,4 @@
-import re
+import regex as re
 from text_splitter import SentenceSplitter
 from speech_recognizer import SpeechRecognizer
 
@@ -6,7 +6,8 @@ class SentenceMatcher:
     def __init__(self) -> None:
         pass
 
-    def _sort_sentence_index_by_len(self, sentence_list, descending = True, min_word_len = 0):
+    @staticmethod
+    def _sort_sentence_index_by_len(sentence_list, descending = True, min_word_len = 0):
         '''sort sentences in order of increasing length'''
 
         assert(min_word_len >= 0)
@@ -77,7 +78,7 @@ def __main__():
     splitter = SentenceSplitter()
     with open(input_file, 'rb') as f:
         text = f.read().decode()
-        ref_sentences = splitter.tokenize_text(text)
+        ref_sentences = splitter.split(text)
 
     ref_sentences = [re.findall('[\w\\-]+', s['body']) for s in ref_sentences]
     #print(ref_sentences)
