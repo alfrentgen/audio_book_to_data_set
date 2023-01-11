@@ -11,8 +11,8 @@ class SentenceSplitter:
     @staticmethod
     def _replace_eols(text: str):
         '''remove word hyphenation at EOLs and EOLs'''
-        text = re.sub(re.compile('-\n-'), '-', text) #remove dashed-word hyphenation
-        text = re.sub(re.compile('-\n'), '', text) #remove word hyphenation
+        sub_function = lambda match_obj: None if match_obj.group(2) is None else match_obj.group(1) + '-' + match_obj.group(3)
+        text = re.sub(re.compile('(\w)(\p{Pd}\n\p{Pd}?)(\w)'), sub_function, text) #remove word and dashed-word hyphenations
         return re.sub(re.compile('[\n\t\r]'), ' ', text) # remove EOLS
 
     def _split_into_sentences(self, text: str):
@@ -22,8 +22,8 @@ class SentenceSplitter:
 
     @staticmethod
     def _cleanup_sentence(sentence: str):
-        '''remove excessive spaces and littering characters, but retain punctuation'''
-        for pattern, sub in ('[\p{Zs}]', ' '), ('\p{Pd}+', '-'), ('[^\w\s\\-,:;]*', ''),\
+        '''remove excessive spaces and littering characters, but retain some punctuation'''
+        for pattern, sub in ('[\p{Zs}]', ' '), ('\p{Pd}+', '-'), ('[^\w\s\\-,:;`]*', ''),\
                             ('^\s*-*\s*|\s*$', ''),\
                             ('\s*,', ','), ('\s*:', ':'), ('\s*;', ';'), ('\s{2,}', ' '):
             sentence = re.sub(re.compile(pattern), sub, sentence)
